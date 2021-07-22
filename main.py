@@ -57,7 +57,7 @@ if __name__ == '__main__':
 
                 train_input = data[:BATCH_SIZE]
                 expected = data[BATCH_SIZE:]
-                train_loss: float = predictor.train(data, expected)
+                train_loss: float = predictor.train(train_input, expected)
                 train_loss_x.append(i)
                 train_loss_y.append(train_loss)
 

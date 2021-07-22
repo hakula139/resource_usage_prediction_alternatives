@@ -1,6 +1,6 @@
 import os
 
-MODEL = 'arima'
+MODEL = 'gru'
 
 INPUT_SIZE = 1
 HIDDEN_SIZE = 50
