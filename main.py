@@ -26,11 +26,10 @@ if __name__ == '__main__':
         total_time, max_time, time_count = 0.0, 0.0, 0
 
         with open(OUTPUT_PATH, 'w') as output_file:
-            for i in range(BATCH_SIZE, len(dataset)):
-                epoch = i + 1
+            for epoch in range(BATCH_SIZE, len(dataset)):
                 start_time = process_time_ns()
 
-                data = dataset[:i]
+                data = dataset[:epoch]
                 train_loss: float = predictor.train(
                     data, (ARIMA_P, ARIMA_D, ARIMA_Q)
                 )
