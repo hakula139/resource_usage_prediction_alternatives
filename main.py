@@ -1,33 +1,11 @@
 from typing import List
 import os
 from time import process_time_ns
-from statsmodels.tsa.statespace.sarimax import SARIMAX, SARIMAXResults
-from utils import read_data, plot_predictions, plot_train_loss
-
+from predictor.predictor import ArimaPredictor
+from common.config import *
+from common.utils import read_data, plot_predictions, plot_train_loss
 
 if __name__ == '__main__':
-    # Parameters
-
-    MODEL = 'arima'
-
-    INPUT_SIZE = 1
-    OUTPUT_SIZE = 1
-    BATCH_SIZE = 50
-    ARIMA_P = 5  # autoregressive model parameter
-    ARIMA_D = 1  # integrated model parameter
-    ARIMA_Q = 0  # moving average model parameter
-    LOSS_THRESHOLD = 2
-
-    DATA_DIR = 'data'
-    INPUT_PATH = os.path.realpath(os.path.join(DATA_DIR, 'input.txt'))
-    OUTPUT_PATH = os.path.realpath(os.path.join(DATA_DIR, 'output.txt'))
-    FIGURE_DIR = os.path.join('figures', MODEL)
-    PREDICTIONS_FIGURE_PATH = os.path.realpath(os.path.join(
-        FIGURE_DIR, 'predictions.svg'
-    ))
-    TRAIN_LOSS_FIGURE_PATH = os.path.realpath(os.path.join(
-        FIGURE_DIR, 'train_loss.svg'
-    ))
 
     try:
         if not os.path.isdir(FIGURE_DIR):
@@ -36,6 +14,7 @@ if __name__ == '__main__':
         print('Server started.')
 
         dataset = read_data(INPUT_PATH)
+        predictor = ArimaPredictor()
         predictions: List[int] = []
 
         # Points for plotting
@@ -52,20 +31,13 @@ if __name__ == '__main__':
                 start_time = process_time_ns()
 
                 data = dataset[:i]
-                model = SARIMAX(
-                    data,
-                    order=(ARIMA_P, ARIMA_D, ARIMA_Q),
-                    initialization='approximate_diffuse',
+                train_loss: float = predictor.train(
+                    data, (ARIMA_P, ARIMA_D, ARIMA_Q)
                 )
-                model_fit: SARIMAXResults = model.fit(
-                    disp=False,
-                    warn_convergence=False,
-                )
-                train_loss: float = model_fit.mse
                 train_loss_x.append(epoch)
                 train_loss_y.append(train_loss)
 
-                predictions: List[float] = model_fit.forecast()
+                predictions: List[float] = predictor.predict()
 
                 naive_pred = round(data[-OUTPUT_SIZE])
                 prediction = (
