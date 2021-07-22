@@ -3,11 +3,16 @@ import os
 MODEL = 'arima'
 
 INPUT_SIZE = 1
+HIDDEN_SIZE = 50
 OUTPUT_SIZE = 1
 BATCH_SIZE = 50
+MAX_SIZE = 1000
 ARIMA_P = 5  # autoregressive model parameter
 ARIMA_D = 1  # integrated model parameter
 ARIMA_Q = 0  # moving average model parameter
+N_LAYERS = 2
+DROPOUT = 0.3
+LEARNING_RATE = 5e-3
 LOSS_THRESHOLD = 2
 
 DATA_DIR = 'data'

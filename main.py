@@ -1,11 +1,32 @@
-from typing import List
+from typing import Callable, Dict, List, NamedTuple, Type
 import os
 from time import process_time_ns
-from predictor.predictor import ArimaPredictor
+from predictor.predictor import ArimaPredictor, BasePredictor, GruPredictor
 from common.config import *
 from common.utils import read_data, plot_predictions, plot_train_loss
 
+
+class PredictorOptions(NamedTuple):
+
+    predictor_class: Type[BasePredictor]
+    epoch_start: int
+    data_start: Callable[[int], int]
+
+
 if __name__ == '__main__':
+
+    predictor_map: Dict[str, PredictorOptions] = {
+        'arima': PredictorOptions(
+            ArimaPredictor,
+            epoch_start=BATCH_SIZE,
+            data_start=lambda end: 0,
+        ),
+        'gru': PredictorOptions(
+            GruPredictor,
+            epoch_start=BATCH_SIZE + OUTPUT_SIZE,
+            data_start=lambda end: end - epoch_start,
+        ),
+    }
 
     try:
         if not os.path.isdir(FIGURE_DIR):
@@ -14,8 +35,8 @@ if __name__ == '__main__':
         print('Server started.')
 
         dataset = read_data(INPUT_PATH)
-        predictor = ArimaPredictor()
-        predictions: List[int] = []
+        options = predictor_map[MODEL]
+        predictor = options.predictor_class()
 
         # Points for plotting
         expected_x, prediction_x = range(1, len(dataset) + 1), []
@@ -26,24 +47,30 @@ if __name__ == '__main__':
         total_time, max_time, time_count = 0.0, 0.0, 0
 
         with open(OUTPUT_PATH, 'w') as output_file:
-            for epoch in range(BATCH_SIZE, len(dataset)):
+            epoch_start = options.epoch_start
+
+            for i in range(epoch_start, len(dataset)):
                 start_time = process_time_ns()
 
-                data = dataset[:epoch]
-                train_loss: float = predictor.train(
-                    data, (ARIMA_P, ARIMA_D, ARIMA_Q)
-                )
-                train_loss_x.append(epoch)
+                data_start = options.data_start(i)
+                data = dataset[data_start:i]
+
+                train_input = data[:BATCH_SIZE]
+                expected = data[BATCH_SIZE:]
+                train_loss: float = predictor.train(data, expected)
+                train_loss_x.append(i)
                 train_loss_y.append(train_loss)
 
-                predictions: List[float] = predictor.predict()
+                valid_input = data[OUTPUT_SIZE:]
+                predictions = predictor.predict(valid_input)
 
-                naive_pred = round(data[-OUTPUT_SIZE])
-                prediction = (
-                    max(round(predictions[0]), 0)
-                    if train_loss < LOSS_THRESHOLD else naive_pred
-                )
-                prediction_x.append(epoch + 1)
+                prediction = predictions[0]
+                prediction: int = max(round(
+                    prediction
+                    if type(prediction) == List[float]
+                    else prediction.item()
+                ), 0)
+                prediction_x.append(i + 1)
                 prediction_y.append(prediction)
 
                 end_time = process_time_ns()
@@ -53,7 +80,7 @@ if __name__ == '__main__':
                 time_count += 1
 
                 print(
-                    f'> {prediction} (naive: {naive_pred})   \t'
+                    f'> {prediction} \t'
                     f'Loss: {train_loss:9.5f} (train) \t'
                     f'Time: {time:.4f} ms'
                 )

@@ -1,33 +1,109 @@
-from typing import List, Tuple
+from typing import Any, List
+from abc import ABC, abstractmethod
+from torch import nn, optim, Tensor
+from common.config import *
 from predictor.models.arima import Arima
+from predictor.models.gru import GruNet
 
 
-class ArimaPredictor:
+class BasePredictor(ABC):
 
+    @abstractmethod
     def __init__(self) -> None:
-        pass
 
-    def train(self, data: List, params: Tuple[int, int, int]) -> float:
+        super().__init__()
+
+    @abstractmethod
+    def train(self, batch_data, expected) -> float:
         '''
         Args:
-            `data`: a list of history data
-            `params`: (`p`, `d`, `q`)
+            `batch_data`: batch data for training
+            `expected`: expected output
 
         Returns:
-            The training loss (MSE).
+            The training loss.
         '''
 
-        self.model = Arima(data, params)
-        self.model_fit = self.model.fit()
-        return self.model_fit.mse
+        pass
 
-    def predict(self, output_size: int = 1) -> List[float]:
+    @abstractmethod
+    def predict(self, batch_data) -> Any:
         '''
         Args:
-            `output_size`: the number of steps to predict
+            `batch_data`: batch data for predicting
 
         Returns:
             The predicted values.
         '''
 
-        return self.model_fit.forecast(output_size)
+        pass
+
+
+class ArimaPredictor(BasePredictor):
+
+    def __init__(self) -> None:
+
+        super().__init__()
+
+    def train(self, batch_data: List, expected=None) -> float:
+
+        self.model = Arima(batch_data, (ARIMA_P, ARIMA_D, ARIMA_Q))
+        self.model_fit = self.model.fit()
+        return self.model_fit.mse
+
+    def predict(self, batch_data=None) -> List[float]:
+
+        return self.model_fit.forecast(OUTPUT_SIZE)
+
+
+class GruPredictor(BasePredictor):
+
+    def __init__(self) -> None:
+
+        super().__init__()
+
+        self.model = GruNet(
+            INPUT_SIZE,
+            HIDDEN_SIZE,
+            OUTPUT_SIZE,
+            BATCH_SIZE,
+            N_LAYERS,
+            DROPOUT,
+        )
+        self.criterion = nn.MSELoss()
+        self.optimizer = optim.Adam(self.model.parameters(), LEARNING_RATE)
+
+    def train(self, batch_data: Tensor, expected: Tensor) -> float:
+
+        self.model.train()
+        self.model.zero_grad()
+        self.model.init_hidden(BATCH_SIZE)
+
+        output: Tensor = self.model(batch_data / MAX_SIZE) * MAX_SIZE
+
+        loss = self.loss(output, expected)
+        cur_loss = loss.item()
+
+        loss.backward()
+        self.optimizer.step()
+        return cur_loss
+
+    def predict(self, batch_data: Tensor) -> Tensor:
+
+        self.model.eval()
+        self.model.init_hidden(BATCH_SIZE)
+
+        output: Tensor = self.model(batch_data / MAX_SIZE) * MAX_SIZE
+        return self.model.relu(output)
+
+    def loss(self, output: Tensor, target: Tensor) -> Tensor:
+        '''
+        Args:
+            `output`: actual output
+            `target`: expected output
+
+        Returns:
+            The loss (MSE) between output and target.
+        '''
+
+        return self.criterion(output, target)
