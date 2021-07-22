@@ -13,7 +13,7 @@ ARIMA_Q = 0  # moving average model parameter
 N_LAYERS = 2
 DROPOUT = 0.3
 LEARNING_RATE = 5e-3
-LOSS_THRESHOLD = 2
+LOSS_THRESHOLD = 100
 
 DATA_DIR = 'data'
 INPUT_PATH = os.path.join(DATA_DIR, 'input.txt')

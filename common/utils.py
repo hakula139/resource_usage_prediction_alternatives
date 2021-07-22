@@ -48,6 +48,7 @@ def plot_predictions(
     plt.plot(x1, y1, 'r', label='Expected')
     plt.plot(x2, y2, 'b', label='Predictions')
     plt.legend()
+    plt.tight_layout()
     plt.savefig(output_path)
 
 
@@ -70,4 +71,5 @@ def plot_train_loss(
     plt.ylabel('Loss')
     plt.plot(x1, y1, 'r', label='Training loss')
     plt.legend()
+    plt.tight_layout()
     plt.savefig(output_path)

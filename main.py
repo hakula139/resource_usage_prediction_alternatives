@@ -58,8 +58,9 @@ if __name__ == '__main__':
                 train_input = data[:BATCH_SIZE]
                 expected = data[BATCH_SIZE:]
                 train_loss: float = predictor.train(train_input, expected)
-                train_loss_x.append(i)
-                train_loss_y.append(train_loss)
+                if train_loss < LOSS_THRESHOLD:
+                    train_loss_x.append(i)
+                    train_loss_y.append(train_loss)
 
                 valid_input = data[OUTPUT_SIZE:]
                 predictions = predictor.predict(valid_input)
