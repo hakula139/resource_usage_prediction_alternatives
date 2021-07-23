@@ -45,6 +45,7 @@ if __name__ == '__main__':
 
         with open(OUTPUT_PATH, 'w') as output_file:
             window_size = options.window_size
+            start_plotting = False
 
             for i in range(window_size, len(dataset)):
                 start_time = process_time_ns()
@@ -54,8 +55,11 @@ if __name__ == '__main__':
                 train_input = data[:BATCH_SIZE]
                 expected = data[BATCH_SIZE:]
                 train_loss: float = predictor.train(train_input, expected)
-                train_loss_x.append(i)
-                train_loss_y.append(train_loss)
+                if train_loss < LOSS_THRESHOLD:
+                    start_plotting = True
+                if start_plotting:
+                    train_loss_x.append(i)
+                    train_loss_y.append(train_loss)
 
                 valid_input = data[OUTPUT_SIZE:]
                 predictions = predictor.predict(valid_input)
@@ -66,8 +70,9 @@ if __name__ == '__main__':
                     if type(prediction) == List[float]
                     else prediction.item()
                 ), 0)
-                prediction_x.append(i + 1)
-                prediction_y.append(prediction)
+                if start_plotting:
+                    prediction_x.append(i + 1)
+                    prediction_y.append(prediction)
 
                 end_time = process_time_ns()
                 time = (end_time - start_time) / 1e6

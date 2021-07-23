@@ -50,7 +50,6 @@ class GruNet(nn.Module):
         '''
 
         input = input.reshape(self.batch_size, 1, -1)
-        input = self.dropout(input)
         output, hidden_n = self.gru(input, self.hidden)
         self.hidden = hidden_n
         output = output.reshape(self.batch_size, -1)
