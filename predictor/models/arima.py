@@ -4,29 +4,58 @@ from statsmodels.tsa.statespace.sarimax import SARIMAX, SARIMAXResults
 
 class Arima:
 
-    def __init__(self, data: List, params: Tuple[int, int, int]) -> None:
+    def __init__(self, params: Tuple[int, int, int]) -> None:
         '''
         Args:
-            `data`: a list of history data
             `params`: (`p`, `d`, `q`)
                 `p`: autoregressive model parameter
                 `d`: integrated model parameter
                 `q`: moving average model parameter
         '''
 
-        self.arima = SARIMAX(
-            data,
-            order=params,
-            initialization='approximate_diffuse',
-        )
+        self.params = params
+        self.result: SARIMAXResults = None
 
-    def fit(self) -> SARIMAXResults:
+    def fit(self, batch_data: List[int]) -> SARIMAXResults:
         '''
+        Args:
+            `data`: a list of history data
+
         Returns:
             The training result.
         '''
 
-        return self.arima.fit(
+        self.arima = SARIMAX(
+            batch_data,
+            order=self.params,
+            initialization='approximate_diffuse',
+        )
+        self.result = self.arima.fit(
             disp=False,
             warn_convergence=False,
         )
+        return self.result
+
+    def append(
+        self, batch_data: List[int], refit: bool = False
+    ) -> SARIMAXResults:
+        '''
+        Append new data to current model.
+
+        Args:
+            `batch_data`: a list of new observed data
+            `refit`: perform refit or not
+
+        Returns:
+            The new training result.
+        '''
+
+        self.result = self.result.append(
+            batch_data,
+            refit=refit,
+            fit_kwargs={
+                'disp': False,
+                'warn_convergence': False,
+            } if refit else None,
+        )
+        return self.result

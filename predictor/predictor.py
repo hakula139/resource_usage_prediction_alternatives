@@ -1,6 +1,7 @@
 from typing import Any, List
 from abc import ABC, abstractmethod
 from torch import float32, nn, optim, Tensor, tensor
+import numpy as np
 from common.config import *
 from predictor.models.arima import Arima
 from predictor.models.gru import GruNet
@@ -45,10 +46,19 @@ class ArimaPredictor(BasePredictor):
 
         super().__init__()
 
+        self.model = Arima((ARIMA_P, ARIMA_D, ARIMA_Q))
+        self.counter = 0
+
     def train(self, batch_data: List[int], expected: List[int] = None) -> float:
 
-        self.model = Arima(batch_data, (ARIMA_P, ARIMA_D, ARIMA_Q))
-        self.model_fit = self.model.fit()
+        if self.model.result is None:
+            self.model_fit = self.model.fit(batch_data)
+        else:
+            if self.counter == BATCH_SIZE:
+                self.counter, refit = 0, True
+            else:
+                self.counter, refit = self.counter + 1, False
+            self.model_fit = self.model.append(batch_data[-1:], refit)
         return self.model_fit.mse
 
     def predict(self, batch_data: List[int] = None) -> List[float]:

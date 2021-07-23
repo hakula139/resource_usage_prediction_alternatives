@@ -9,8 +9,7 @@ from common.utils import read_data, plot_predictions, plot_train_loss
 class PredictorOptions(NamedTuple):
 
     predictor_class: Type[BasePredictor]
-    epoch_start: int
-    data_start: Callable[[int], int]
+    window_size: int
 
 
 if __name__ == '__main__':
@@ -18,13 +17,11 @@ if __name__ == '__main__':
     predictor_map: Dict[str, PredictorOptions] = {
         'arima': PredictorOptions(
             ArimaPredictor,
-            epoch_start=BATCH_SIZE,
-            data_start=lambda end: 0,
+            window_size=BATCH_SIZE,
         ),
         'gru': PredictorOptions(
             GruPredictor,
-            epoch_start=BATCH_SIZE + OUTPUT_SIZE,
-            data_start=lambda end: end - epoch_start,
+            window_size=BATCH_SIZE + OUTPUT_SIZE,
         ),
     }
 
@@ -47,20 +44,18 @@ if __name__ == '__main__':
         total_time, max_time, time_count = 0.0, 0.0, 0
 
         with open(OUTPUT_PATH, 'w') as output_file:
-            epoch_start = options.epoch_start
+            window_size = options.window_size
 
-            for i in range(epoch_start, len(dataset)):
+            for i in range(window_size, len(dataset)):
                 start_time = process_time_ns()
 
-                data_start = options.data_start(i)
-                data = dataset[data_start:i]
+                data = dataset[i - window_size:i]
 
                 train_input = data[:BATCH_SIZE]
                 expected = data[BATCH_SIZE:]
                 train_loss: float = predictor.train(train_input, expected)
-                if train_loss < LOSS_THRESHOLD:
-                    train_loss_x.append(i)
-                    train_loss_y.append(train_loss)
+                train_loss_x.append(i)
+                train_loss_y.append(train_loss)
 
                 valid_input = data[OUTPUT_SIZE:]
                 predictions = predictor.predict(valid_input)
