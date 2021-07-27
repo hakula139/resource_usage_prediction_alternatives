@@ -1,5 +1,6 @@
 from typing import Any, List
 from abc import ABC, abstractmethod
+import math
 from torch import float32, nn, optim, Tensor, tensor
 from common.config import *
 from predictor.models.arima import Arima
@@ -58,7 +59,7 @@ class ArimaPredictor(BasePredictor):
             else:
                 self.counter, refit = self.counter + 1, False
             self.model_fit = self.model.append(batch_data[-1:], refit)
-        return self.model_fit.mse
+        return math.sqrt(self.model_fit.mse)
 
     def predict(self, batch_data: List[int] = None) -> List[float]:
 
@@ -105,7 +106,7 @@ class GruPredictor(BasePredictor):
 
         loss.backward()
         self.optimizer.step()
-        return cur_loss
+        return math.sqrt(cur_loss)
 
     def predict(self, batch_data: List[int]) -> Tensor:
 
