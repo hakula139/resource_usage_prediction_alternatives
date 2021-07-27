@@ -35,6 +35,7 @@ class GruNet(nn.Module):
             hidden_size,
             n_layers,
             batch_first=True,
+            bidirectional=True,
             dropout=dropout,
         )
         # Initialize weights
@@ -44,7 +45,7 @@ class GruNet(nn.Module):
             elif 'weight_hh' in name:
                 init.orthogonal_(param.data)
 
-        self.fc = nn.Linear(hidden_size, output_size)
+        self.fc = nn.Linear(hidden_size * 2, output_size)
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(dropout)
 
@@ -74,5 +75,5 @@ class GruNet(nn.Module):
 
         weight = next(self.parameters())
         self.hidden = weight.new_zeros(
-            self.n_layers, batch_size, self.hidden_size,
+            self.n_layers * 2, batch_size, self.hidden_size,
         )
