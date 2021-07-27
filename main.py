@@ -75,6 +75,8 @@ if __name__ == '__main__':
                     loss_count += 1
 
                 avg_loss = total_loss / loss_count if loss_count > 0 else -1.0
+                if hasattr(predictor, 'scheduler') and avg_loss >= 0:
+                    predictor.scheduler.step(avg_loss)
 
                 valid_input = data[OUTPUT_SIZE:]
                 predictions = predictor.predict(valid_input)
@@ -100,7 +102,7 @@ if __name__ == '__main__':
                 time_count += 1
 
                 print(
-                    f'> {prediction}'
+                    f'#{i + 1:<6} > {prediction}'
                     f' \tLoss:'
                     f' {train_loss:9.5f} (current)'
                     + (

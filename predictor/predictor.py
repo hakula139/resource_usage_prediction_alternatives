@@ -81,6 +81,14 @@ class GruPredictor(BasePredictor):
         )
         self.criterion = nn.MSELoss()
         self.optimizer = optim.Adam(self.model.parameters(), LEARNING_RATE)
+        self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+            self.optimizer,
+            mode='min',
+            factor=0.8,
+            patience=1000,
+            min_lr=1e-3,
+            verbose=True,
+        )
 
     def train(self, batch_data: List[int], expected: List[int]) -> float:
 
