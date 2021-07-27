@@ -1,7 +1,6 @@
 from typing import Any, List
 from abc import ABC, abstractmethod
 from torch import float32, nn, optim, Tensor, tensor
-import numpy as np
 from common.config import *
 from predictor.models.arima import Arima
 from predictor.models.gru import GruNet

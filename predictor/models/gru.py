@@ -1,4 +1,5 @@
 from torch import nn, Tensor
+from torch.nn import init
 
 
 class GruNet(nn.Module):
@@ -36,6 +37,13 @@ class GruNet(nn.Module):
             batch_first=True,
             dropout=dropout,
         )
+        # Initialize weights
+        for name, param in self.gru.named_parameters():
+            if 'weight_ih' in name:
+                init.xavier_uniform_(param.data)
+            elif 'weight_hh' in name:
+                init.orthogonal_(param.data)
+
         self.fc = nn.Linear(hidden_size, output_size)
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(dropout)
@@ -52,9 +60,9 @@ class GruNet(nn.Module):
         input = input.reshape(self.batch_size, 1, -1)
         output, hidden_n = self.gru(input, self.hidden)
         self.hidden = hidden_n
-        output = output.reshape(self.batch_size, -1)
+        output: Tensor = output.reshape(self.batch_size, -1)
         output = self.fc(output)
-        return output[0]
+        return output.mean(0)
 
     def init_hidden(self, batch_size: int) -> None:
         '''
