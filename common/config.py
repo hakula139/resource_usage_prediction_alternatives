@@ -1,20 +1,20 @@
 import os
 
-MODEL = 'gru'
+MODEL = 'arima'
 
-INPUT_SIZE = 1
-HIDDEN_SIZE = 30
+BATCH_SIZE = 1
+HIDDEN_SIZE = 100
 OUTPUT_SIZE = 1
-BATCH_SIZE = 100
+SEQ_LEN = 300
 MAX_SIZE = 5000
-ARIMA_P = 10  # autoregressive model parameter
+ARIMA_P = 20  # autoregressive model parameter
 ARIMA_D = 1  # integrated model parameter
 ARIMA_Q = 0  # moving average model parameter
-ARIMA_WINDOW_SIZE = 2000
+ARIMA_WINDOW_SIZE = 200
 N_LAYERS = 2
 DROPOUT = 0.0
-LEARNING_RATE = 1e-2
-LOSS_THRESHOLD = 100
+LEARNING_RATE = 5e-3
+LOSS_THRESHOLD = 10
 
 DATA_DIR = 'data'
 INPUT_PATH = os.path.join(DATA_DIR, 'input.txt')

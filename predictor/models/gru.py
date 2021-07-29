@@ -6,27 +6,25 @@ class GruNet(nn.Module):
 
     def __init__(
         self,
-        input_size: int,
         hidden_size: int,
         output_size: int,
-        batch_size: int,
+        seq_len: int,
         n_layers: int,
         dropout: float = 0.2,
     ) -> None:
         '''
         Args:
-            `input_size`: the number of input data
             `hidden_size`: the dimension of the hidden state
             `output_size`: the number of output data
-            `batch_size`: the size of each batch data
+            `seq_len`: the size of each batch data (sequence length)
             `n_layers`: the depth of recurrent layers
-            `dropout`: the dropout rate for each dropout layer
+            `dropout`: the dropout rate of each dropout layer
         '''
 
         super().__init__()
 
         self.hidden_size = hidden_size
-        self.batch_size = batch_size
+        self.seq_len = seq_len
         self.n_layers = n_layers
         self.hidden: Tensor = None
 
@@ -52,14 +50,14 @@ class GruNet(nn.Module):
     def forward(self, input: Tensor) -> Tensor:
         '''
         Args:
-            `input`: shape(batch_size)
+            `input`: shape(batch_size, seq_len)
 
         Returns:
-            shape(batch_size)
+            shape(batch_size, output_size)
         '''
 
-        input_size = input.shape[0]
-        input = input.reshape(self.batch_size, input_size, -1)
+        batch_size = input.shape[0]
+        input = input.reshape(self.seq_len, batch_size, -1)
         output, hidden_n = self.gru(input, self.hidden)
         self.hidden = hidden_n
         output = self.fc(output)
@@ -70,7 +68,7 @@ class GruNet(nn.Module):
         Initialize hidden state.
 
         Args:
-            `batch_size`: the size of each batch data
+            `batch_size`: batch size
         '''
 
         weight = next(self.parameters())

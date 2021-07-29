@@ -1,4 +1,5 @@
 from typing import Any, List
+from collections import deque
 from abc import ABC, abstractmethod
 import math
 from torch import float32, nn, optim, Tensor, tensor
@@ -47,23 +48,14 @@ class ArimaPredictor(BasePredictor):
         super().__init__()
 
         self.model = Arima((ARIMA_P, ARIMA_D, ARIMA_Q))
-        self.history_data = []
+        self.model_fit = None
 
     def train(self, batch_data: List[int], expected: List[int] = None) -> float:
 
-        fit = len(self.history_data) % ARIMA_WINDOW_SIZE == 0
-        refit = len(self.history_data) % BATCH_SIZE == 0
-
-        if len(self.history_data) == 0:
-            self.history_data = batch_data
+        if self.model_fit is None:
+            self.model_fit = self.model.fit(batch_data)
         else:
-            self.history_data.append(batch_data[-1])
-
-        if fit:
-            self.history_data = self.history_data[-ARIMA_WINDOW_SIZE >> 1:]
-            self.model_fit = self.model.fit(self.history_data)
-        else:
-            self.model_fit = self.model.append(batch_data[-1:], refit)
+            self.model_fit = self.model.append(batch_data[-1:])
 
         return math.sqrt(self.model_fit.mse)
 
@@ -79,10 +71,9 @@ class GruPredictor(BasePredictor):
         super().__init__()
 
         self.model = GruNet(
-            INPUT_SIZE,
             HIDDEN_SIZE,
             OUTPUT_SIZE,
-            BATCH_SIZE,
+            SEQ_LEN,
             N_LAYERS,
             DROPOUT,
         )
@@ -92,36 +83,32 @@ class GruPredictor(BasePredictor):
             self.optimizer,
             mode='min',
             factor=0.8,
-            patience=1000,
-            min_lr=1e-3,
+            patience=500,
+            min_lr=2e-3,
             verbose=True,
         )
 
-        self.cached_batch_data = []
-        self.cached_expected = []
+        self.cached_batch_data = deque([])
+        self.cached_expected = deque([])
 
     def train(self, batch_data: List[int], expected: List[int]) -> float:
 
         self.cached_batch_data.append(batch_data)
         self.cached_expected.append(expected)
-
-        fit = len(self.cached_batch_data) % INPUT_SIZE == 0
-        if not fit:
-            return -1.0
+        if len(self.cached_batch_data) > BATCH_SIZE:
+            self.cached_batch_data.popleft()
+            self.cached_expected.popleft()
 
         self.model.train()
         self.model.zero_grad()
-        self.model.init_hidden(BATCH_SIZE)
+        self.model.init_hidden(SEQ_LEN)
 
         input = tensor(self.cached_batch_data, dtype=float32) / MAX_SIZE
         target = tensor(self.cached_expected, dtype=float32)
         output = self.model.forward(input) * MAX_SIZE
 
         loss = self.loss(output, target)
-        cur_loss = loss.item() / INPUT_SIZE
-
-        self.cached_batch_data.clear()
-        self.cached_expected.clear()
+        cur_loss = loss.item()
 
         loss.backward()
         self.optimizer.step()
@@ -130,11 +117,12 @@ class GruPredictor(BasePredictor):
     def predict(self, batch_data: List[int]) -> Tensor:
 
         self.model.eval()
-        self.model.init_hidden(BATCH_SIZE)
+        self.model.init_hidden(SEQ_LEN)
 
         input = tensor([batch_data], dtype=float32) / MAX_SIZE
-        output = self.model.forward(input) * MAX_SIZE
-        return self.model.relu(output)
+        output: Tensor = self.model.forward(input) * MAX_SIZE
+        output = self.model.relu(output)
+        return output.squeeze(0)
 
     def loss(self, output: Tensor, target: Tensor) -> Tensor:
         '''

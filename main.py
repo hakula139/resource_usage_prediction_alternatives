@@ -17,11 +17,11 @@ if __name__ == '__main__':
     predictor_map: Dict[str, PredictorOptions] = {
         'arima': PredictorOptions(
             ArimaPredictor,
-            window_size=BATCH_SIZE,
+            window_size=SEQ_LEN,
         ),
         'gru': PredictorOptions(
             GruPredictor,
-            window_size=BATCH_SIZE + OUTPUT_SIZE,
+            window_size=SEQ_LEN + OUTPUT_SIZE,
         ),
     }
 
@@ -53,8 +53,8 @@ if __name__ == '__main__':
 
                 data = dataset[i - window_size:i]
 
-                train_input = data[:BATCH_SIZE]
-                expected = data[BATCH_SIZE:]
+                train_input = data[:SEQ_LEN]
+                expected = data[SEQ_LEN:]
                 train_loss: float = predictor.train(train_input, expected)
 
                 # Waiting for an acceptable training loss
@@ -63,12 +63,6 @@ if __name__ == '__main__':
                     pass
                 elif train_loss < LOSS_THRESHOLD:
                     start_plotting = True
-                else:
-                    start_plotting = False
-                    train_loss_x.clear()
-                    train_loss_y.clear()
-                    total_loss = 0
-                    loss_count = 0
 
                 if start_plotting and train_loss >= 0:
                     train_loss_x.append(i)

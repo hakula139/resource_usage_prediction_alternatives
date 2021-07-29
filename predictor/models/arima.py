@@ -50,12 +50,5 @@ class Arima:
             The new training result.
         '''
 
-        self.result = self.result.append(
-            batch_data,
-            refit=refit,
-            fit_kwargs={
-                'disp': False,
-                'warn_convergence': False,
-            } if refit else None,
-        )
+        self.result = self.result.extend(batch_data)
         return self.result
