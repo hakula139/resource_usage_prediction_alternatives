@@ -3,16 +3,17 @@ import os
 MODEL = 'gru'
 
 INPUT_SIZE = 1
-HIDDEN_SIZE = 10
+HIDDEN_SIZE = 30
 OUTPUT_SIZE = 1
-BATCH_SIZE = 20
+BATCH_SIZE = 100
 MAX_SIZE = 5000
-ARIMA_P = 5  # autoregressive model parameter
+ARIMA_P = 10  # autoregressive model parameter
 ARIMA_D = 1  # integrated model parameter
 ARIMA_Q = 0  # moving average model parameter
+ARIMA_WINDOW_SIZE = 2000
 N_LAYERS = 2
 DROPOUT = 0.0
-LEARNING_RATE = 4e-3
+LEARNING_RATE = 1e-2
 LOSS_THRESHOLD = 100
 
 DATA_DIR = 'data'

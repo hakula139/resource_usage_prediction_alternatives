@@ -15,9 +15,9 @@ class GruNet(nn.Module):
     ) -> None:
         '''
         Args:
-            `input_size`: the dimension of input data
+            `input_size`: the number of input data
             `hidden_size`: the dimension of the hidden state
-            `output_size`: the dimension of output data
+            `output_size`: the number of output data
             `batch_size`: the size of each batch data
             `n_layers`: the depth of recurrent layers
             `dropout`: the dropout rate for each dropout layer
@@ -31,7 +31,7 @@ class GruNet(nn.Module):
         self.hidden: Tensor = None
 
         self.gru = nn.GRU(
-            input_size,
+            1,
             hidden_size,
             n_layers,
             batch_first=True,
@@ -58,10 +58,10 @@ class GruNet(nn.Module):
             shape(batch_size)
         '''
 
-        input = input.reshape(self.batch_size, 1, -1)
+        input_size = input.shape[0]
+        input = input.reshape(self.batch_size, input_size, -1)
         output, hidden_n = self.gru(input, self.hidden)
         self.hidden = hidden_n
-        output: Tensor = output.reshape(self.batch_size, -1)
         output = self.fc(output)
         return output.mean(0)
 

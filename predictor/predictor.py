@@ -47,18 +47,24 @@ class ArimaPredictor(BasePredictor):
         super().__init__()
 
         self.model = Arima((ARIMA_P, ARIMA_D, ARIMA_Q))
-        self.counter = 0
+        self.history_data = []
 
     def train(self, batch_data: List[int], expected: List[int] = None) -> float:
 
-        if self.model.result is None:
-            self.model_fit = self.model.fit(batch_data)
+        fit = len(self.history_data) % ARIMA_WINDOW_SIZE == 0
+        refit = len(self.history_data) % BATCH_SIZE == 0
+
+        if len(self.history_data) == 0:
+            self.history_data = batch_data
         else:
-            if self.counter == BATCH_SIZE:
-                self.counter, refit = 0, True
-            else:
-                self.counter, refit = self.counter + 1, False
+            self.history_data.append(batch_data[-1])
+
+        if fit:
+            self.history_data = self.history_data[-ARIMA_WINDOW_SIZE >> 1:]
+            self.model_fit = self.model.fit(self.history_data)
+        else:
             self.model_fit = self.model.append(batch_data[-1:], refit)
+
         return math.sqrt(self.model_fit.mse)
 
     def predict(self, batch_data: List[int] = None) -> List[float]:
@@ -91,29 +97,42 @@ class GruPredictor(BasePredictor):
             verbose=True,
         )
 
+        self.cached_batch_data = []
+        self.cached_expected = []
+
     def train(self, batch_data: List[int], expected: List[int]) -> float:
+
+        self.cached_batch_data.append(batch_data)
+        self.cached_expected.append(expected)
+
+        fit = len(self.cached_batch_data) % INPUT_SIZE == 0
+        if not fit:
+            return -1.0
 
         self.model.train()
         self.model.zero_grad()
         self.model.init_hidden(BATCH_SIZE)
 
-        input = tensor(batch_data, dtype=float32) / MAX_SIZE
-        target = tensor(expected, dtype=float32)
+        input = tensor(self.cached_batch_data, dtype=float32) / MAX_SIZE
+        target = tensor(self.cached_expected, dtype=float32)
         output = self.model.forward(input) * MAX_SIZE
 
         loss = self.loss(output, target)
-        cur_loss = loss.item()
+        cur_loss = loss.item() / INPUT_SIZE
+
+        self.cached_batch_data.clear()
+        self.cached_expected.clear()
 
         loss.backward()
         self.optimizer.step()
-        return math.sqrt(cur_loss)
+        return cur_loss
 
     def predict(self, batch_data: List[int]) -> Tensor:
 
         self.model.eval()
         self.model.init_hidden(BATCH_SIZE)
 
-        input = tensor(batch_data, dtype=float32) / MAX_SIZE
+        input = tensor([batch_data], dtype=float32) / MAX_SIZE
         output = self.model.forward(input) * MAX_SIZE
         return self.model.relu(output)
 
@@ -127,4 +146,5 @@ class GruPredictor(BasePredictor):
             The loss (MSE) between output and target.
         '''
 
-        return self.criterion(output, target)
+        mse: Tensor = self.criterion(output, target)
+        return mse.sqrt()

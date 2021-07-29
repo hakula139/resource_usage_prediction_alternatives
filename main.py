@@ -42,13 +42,12 @@ if __name__ == '__main__':
         train_loss_y, naive_loss_y = [], []
 
         total_time, max_time, time_count = 0.0, 0.0, 0
-        total_loss, loss_count = 0.0, 0
-        avg_loss = -1.0
+        total_loss, loss_count, avg_loss = 0.0, 0, -1.0
+
+        window_size = options.window_size
+        start_plotting = False
 
         with open(OUTPUT_PATH, 'w') as output_file:
-            window_size = options.window_size
-            start_plotting = False
-
             for i in range(window_size, len(dataset)):
                 start_time = process_time_ns()
 
@@ -59,7 +58,10 @@ if __name__ == '__main__':
                 train_loss: float = predictor.train(train_input, expected)
 
                 # Waiting for an acceptable training loss
-                if train_loss < LOSS_THRESHOLD:
+                if train_loss < 0:
+                    # Not training
+                    pass
+                elif train_loss < LOSS_THRESHOLD:
                     start_plotting = True
                 else:
                     start_plotting = False
@@ -68,7 +70,7 @@ if __name__ == '__main__':
                     total_loss = 0
                     loss_count = 0
 
-                if start_plotting:
+                if start_plotting and train_loss >= 0:
                     train_loss_x.append(i)
                     train_loss_y.append(train_loss)
                     total_loss += train_loss
@@ -88,12 +90,9 @@ if __name__ == '__main__':
                     else prediction.item()
                 ), 0)
 
-                prediction_x.append(i + 1)
                 if start_plotting:
+                    prediction_x.append(i + 1)
                     prediction_y.append(prediction)
-                else:
-                    # Use naive prediction for cold start
-                    prediction_y.append(data[-1])
 
                 end_time = process_time_ns()
                 time = (end_time - start_time) / 1e6
@@ -103,13 +102,13 @@ if __name__ == '__main__':
 
                 print(
                     f'#{i + 1:<6} > {prediction}'
-                    f' \tLoss:'
-                    f' {train_loss:9.5f} (current)'
-                    + (
+                    f' \tLoss:' + (
+                        f' {train_loss:9.5f} (current)'
+                        if train_loss >= 0 else ' ' * 20
+                    ) + (
                         f' | {avg_loss:9.5f} (average)'
                         if avg_loss >= 0 else ' ' * 22
-                    ) +
-                    f' \tTime: {time:.4f} ms'
+                    ) + f' \tTime: {time:.4f} ms'
                 )
                 output_file.write(f'{prediction} ')
 
