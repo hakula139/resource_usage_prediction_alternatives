@@ -41,7 +41,7 @@ def plot_predictions(
         `y2`: y-axis of predicted values
     '''
 
-    plt.figure(figsize=(max(len(x1) / 20, 600), 9))
+    plt.figure(figsize=(min(len(x1) / 20, 600), 9))
     plt.title('Prediction figure')
     plt.xlabel('Epoch')
     plt.ylabel('Count')
@@ -65,7 +65,7 @@ def plot_train_loss(
         `y1`: y-axis of training losses
     '''
 
-    plt.figure(figsize=(max(len(x1) / 20, 600), 9))
+    plt.figure(figsize=(min(len(x1) / 20, 600), 9))
     plt.title('Loss figure')
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
