@@ -10,6 +10,7 @@ class PredictorOptions(NamedTuple):
 
     predictor_class: Type[BasePredictor]
     window_size: int
+    seq_len: int
 
 
 if __name__ == '__main__':
@@ -17,11 +18,13 @@ if __name__ == '__main__':
     predictor_map: Dict[str, PredictorOptions] = {
         'arima': PredictorOptions(
             ArimaPredictor,
-            window_size=SEQ_LEN,
+            window_size=ARIMA_WINDOW_SIZE,
+            seq_len=ARIMA_WINDOW_SIZE,
         ),
         'gru': PredictorOptions(
             GruPredictor,
             window_size=SEQ_LEN + OUTPUT_SIZE,
+            seq_len=SEQ_LEN,
         ),
     }
 
@@ -44,17 +47,16 @@ if __name__ == '__main__':
         total_time, max_time, time_count = 0.0, 0.0, 0
         total_loss, loss_count, avg_loss = 0.0, 0, -1.0
 
-        window_size = options.window_size
         start_plotting = False
 
         with open(OUTPUT_PATH, 'w') as output_file:
-            for i in range(window_size, len(dataset)):
+            for i in range(options.window_size, len(dataset)):
                 start_time = process_time_ns()
 
-                data = dataset[i - window_size:i]
+                data = dataset[i - options.window_size:i]
 
-                train_input = data[:SEQ_LEN]
-                expected = data[SEQ_LEN:]
+                train_input = data[:options.seq_len]
+                expected = data[options.seq_len:]
                 train_loss: float = predictor.train(train_input, expected)
 
                 # Waiting for an acceptable training loss
@@ -114,12 +116,15 @@ if __name__ == '__main__':
 
         plot_predictions(
             PREDICTIONS_FIGURE_PATH,
-            expected_x, expected_y,
-            prediction_x, prediction_y,
+            expected_x[-DISPLAY_SIZE:],
+            expected_y[-DISPLAY_SIZE:],
+            prediction_x[-DISPLAY_SIZE:],
+            prediction_y[-DISPLAY_SIZE:],
         )
         plot_train_loss(
             TRAIN_LOSS_FIGURE_PATH,
-            train_loss_x, train_loss_y,
+            train_loss_x,
+            train_loss_y,
         )
 
     except KeyboardInterrupt:

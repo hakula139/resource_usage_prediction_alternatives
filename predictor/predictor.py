@@ -83,8 +83,8 @@ class GruPredictor(BasePredictor):
             self.optimizer,
             mode='min',
             factor=0.8,
-            patience=500,
-            min_lr=2e-3,
+            patience=1000,
+            min_lr=5e-3,
             verbose=True,
         )
 
