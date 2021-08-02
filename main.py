@@ -3,7 +3,7 @@ import os
 from time import process_time_ns
 from predictor.predictor import ArimaPredictor, BasePredictor, GruPredictor
 from common.config import *
-from common.utils import read_data, plot_predictions, plot_train_loss
+from common.utils import *
 
 
 class PredictorOptions(NamedTuple):
@@ -23,7 +23,7 @@ if __name__ == '__main__':
         ),
         'gru': PredictorOptions(
             GruPredictor,
-            window_size=SEQ_LEN + OUTPUT_SIZE,
+            window_size=RNN_WINDOW_SIZE,
             seq_len=SEQ_LEN,
         ),
     }
@@ -35,6 +35,7 @@ if __name__ == '__main__':
         print('Server started.')
 
         dataset = read_data(INPUT_PATH)
+        normalized_dataset, max_value = normalize(dataset)
         options = predictor_map[MODEL]
         predictor = options.predictor_class()
 
@@ -53,11 +54,10 @@ if __name__ == '__main__':
             for i in range(options.window_size, len(dataset)):
                 start_time = process_time_ns()
 
-                data = dataset[i - options.window_size:i]
+                data = normalized_dataset[i - options.window_size:i]
 
-                train_input = data[:options.seq_len]
-                expected = data[options.seq_len:]
-                train_loss: float = predictor.train(train_input, expected)
+                train_input = data
+                train_loss: float = predictor.train(train_input)
 
                 # Waiting for an acceptable training loss
                 if train_loss < 0:
@@ -72,19 +72,18 @@ if __name__ == '__main__':
                     total_loss += train_loss
                     loss_count += 1
 
-                avg_loss = total_loss / loss_count if loss_count > 0 else -1.0
-                if hasattr(predictor, 'scheduler') and avg_loss >= 0:
-                    predictor.scheduler.step(avg_loss)
+                if hasattr(predictor, 'scheduler') and train_loss >= 0:
+                    predictor.scheduler.step(train_loss)
 
-                valid_input = data[OUTPUT_SIZE:]
+                valid_input = data[-options.seq_len:]
                 predictions = predictor.predict(valid_input)
 
-                prediction = predictions[0]
-                prediction: int = max(round(
-                    prediction
-                    if type(prediction) == List[float]
-                    else prediction.item()
-                ), 0)
+                prediction: float = (
+                    predictions[0]
+                    if type(predictions) == List
+                    else predictions[0].item()
+                )
+                prediction = denormalize(prediction, max_value)
 
                 if start_plotting:
                     prediction_x.append(i + 1)
@@ -96,6 +95,7 @@ if __name__ == '__main__':
                 max_time = max(max_time, time)
                 time_count += 1
 
+                avg_loss = total_loss / loss_count if loss_count > 0 else -1.0
                 print(
                     f'#{i + 1:<6} > {prediction}'
                     f' \tLoss:' + (

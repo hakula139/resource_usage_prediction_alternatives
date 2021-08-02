@@ -1,4 +1,5 @@
-from typing import List
+from typing import List, Tuple
+from common.config import *
 from matplotlib import pyplot as plt
 
 
@@ -23,6 +24,41 @@ def read_data(input_path: str) -> List[int]:
         if len(data) > 0 and data[-1] < 0:
             data.pop()
         return data
+
+
+def normalize(data: List[int]) -> Tuple[List[float], int]:
+    '''
+    Normalize a dataset to range [0, 1].
+
+    Args:
+        `data`: the dataset to normalize
+
+    Returns:
+        `normalized_data`: a list of normalized data
+        `max_value`: the maximum value in dataset (for denormalization)
+    '''
+
+    max_value = max(data) if len(data) > 0 else MAX_SIZE
+    normalized_data = [
+        value / max_value
+        for value in data
+    ]
+    return normalized_data, max_value
+
+
+def denormalize(value: float, max_value: int = MAX_SIZE) -> int:
+    '''
+    Convert a normalized value to its original value.
+
+    Args:
+        `value`: the value to denormalize
+        `max_value`: the maximum value in dataset
+
+    Returns:
+        The denormalized value.
+    '''
+
+    return max(round(value * max_value), 0)
 
 
 def plot_predictions(
