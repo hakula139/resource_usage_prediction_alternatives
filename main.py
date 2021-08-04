@@ -93,10 +93,11 @@ if __name__ == '__main__':
                     prediction_y.append(prediction)
 
                 if start_plotting and valid_loss >= 0:
-                    valid_loss_x.append(i + 1 - OUTPUT_SIZE)
-                    valid_loss_y.append(valid_loss)
                     total_loss += valid_loss
                     loss_count += 1
+                    avg_loss = total_loss / loss_count
+                    valid_loss_x.append(i + 1 - OUTPUT_SIZE)
+                    valid_loss_y.append(avg_loss)
 
                 end_time = process_time_ns()
                 time = (end_time - start_time) / 1e6
@@ -104,7 +105,6 @@ if __name__ == '__main__':
                 max_time = max(max_time, time)
                 time_count += 1
 
-                avg_loss = total_loss / loss_count if loss_count > 0 else -1.0
                 print(
                     f'#{i + 1:<6} > {prediction}'
                     f' \tLoss:' + (

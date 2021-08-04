@@ -148,7 +148,7 @@ def plot_loss(
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
     plt.plot(x1, y1, 'r', label='Training loss')
-    plt.plot(x2, y2, 'b', label='Validation loss')
+    plt.plot(x2, y2, 'b', label='Validation loss (average)')
     plt.legend()
     plt.tight_layout()
     plt.savefig(output_path)
