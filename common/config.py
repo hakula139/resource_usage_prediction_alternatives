@@ -7,13 +7,13 @@ ARIMA_D = 1  # integrated model parameter
 ARIMA_Q = 0  # moving average model parameter
 ARIMA_WINDOW_SIZE = 300
 
-HIDDEN_SIZE = 15
+HIDDEN_SIZE = 10
 OUTPUT_SIZE = 1
 MAX_SIZE = 1000
-SEQ_LEN = 30
+SEQ_LEN = 15
 RNN_WINDOW_SIZE = 300
 N_LAYERS = 1
-DROPOUT = 0.5
+DROPOUT = 0.3
 LEARNING_RATE = 1e-2
 LOSS_THRESHOLD = 0.1
 

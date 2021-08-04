@@ -80,7 +80,7 @@ class GruPredictor(BasePredictor):
             self.optimizer,
             mode='min',
             factor=0.8,
-            patience=500,
+            patience=1000,
             min_lr=1e-3,
             verbose=True,
         )
@@ -91,7 +91,7 @@ class GruPredictor(BasePredictor):
         self.model.zero_grad()
 
         batch_size = len(batch_data) - SEQ_LEN - OUTPUT_SIZE
-        step = math.ceil(RNN_WINDOW_SIZE / SEQ_LEN)
+        step = RNN_WINDOW_SIZE // SEQ_LEN << 1
 
         train_data = tensor([
             batch_data[i:i + SEQ_LEN]
