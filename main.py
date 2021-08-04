@@ -70,9 +70,6 @@ if __name__ == '__main__':
                     train_loss_x.append(i)
                     train_loss_y.append(train_loss)
 
-                # if hasattr(predictor, 'scheduler') and train_loss >= 0:
-                #     predictor.scheduler.step(train_loss)
-
                 valid_input = data[-options.seq_len:]
                 predictions = predictor.predict(valid_input)
 
@@ -98,6 +95,9 @@ if __name__ == '__main__':
                     avg_loss = total_loss / loss_count
                     valid_loss_x.append(i + 1 - OUTPUT_SIZE)
                     valid_loss_y.append(avg_loss)
+
+                if hasattr(predictor, 'scheduler') and avg_loss >= 0:
+                    predictor.scheduler.step(avg_loss)
 
                 end_time = process_time_ns()
                 time = (end_time - start_time) / 1e6

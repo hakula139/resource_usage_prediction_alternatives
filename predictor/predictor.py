@@ -1,7 +1,7 @@
 from typing import Any, List
 from abc import ABC, abstractmethod
 import math
-from torch import float32, nn, optim, Tensor, tensor
+from torch import float32, nn, no_grad, optim, Tensor, tensor
 from common.config import *
 from predictor.models.arima import Arima
 from predictor.models.gru import Seq2SeqGruNet
@@ -80,8 +80,8 @@ class GruPredictor(BasePredictor):
             self.optimizer,
             mode='min',
             factor=0.8,
-            patience=200,
-            min_lr=8e-3,
+            patience=500,
+            min_lr=1e-3,
             verbose=True,
         )
 
@@ -118,8 +118,9 @@ class GruPredictor(BasePredictor):
             batch_data
         ], dtype=float32)
 
-        output: Tensor = self.model.forward(predict_data)
-        output = self.model.relu(output)
+        with no_grad():
+            output: Tensor = self.model.forward(predict_data)
+            output = self.model.relu(output)
         return output
 
     def loss(self, output: Tensor, target: Tensor) -> Tensor:
