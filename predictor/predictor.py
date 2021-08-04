@@ -4,7 +4,7 @@ import math
 from torch import float32, nn, optim, Tensor, tensor
 from common.config import *
 from predictor.models.arima import Arima
-from predictor.models.gru import GruNet
+from predictor.models.gru import Seq2SeqGruNet
 
 
 class BasePredictor(ABC):
@@ -68,7 +68,7 @@ class GruPredictor(BasePredictor):
 
         super().__init__()
 
-        self.model = GruNet(
+        self.model = Seq2SeqGruNet(
             HIDDEN_SIZE,
             SEQ_LEN,
             N_LAYERS,

@@ -19,6 +19,7 @@ class GruEncoder(nn.Module):
             `seq_len`: the size of each batch data (sequence length)
             `n_layers`: the depth of recurrent layers
             `dropout`: the dropout rate of each recurrent layer
+            `bidirectional` (optional): use bidirectional gru or not
         '''
 
         super().__init__()
@@ -146,7 +147,7 @@ class GruDecoder(nn.Module):
         return output, hidden
 
 
-class GruNet(nn.Module):
+class Seq2SeqGruNet(nn.Module):
 
     def __init__(
         self,
