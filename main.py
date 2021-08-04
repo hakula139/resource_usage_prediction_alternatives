@@ -70,8 +70,8 @@ if __name__ == '__main__':
                     train_loss_x.append(i)
                     train_loss_y.append(train_loss)
 
-                if hasattr(predictor, 'scheduler') and train_loss >= 0:
-                    predictor.scheduler.step(train_loss)
+                # if hasattr(predictor, 'scheduler') and train_loss >= 0:
+                #     predictor.scheduler.step(train_loss)
 
                 valid_input = data[-options.seq_len:]
                 predictions = predictor.predict(valid_input)

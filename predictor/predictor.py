@@ -75,13 +75,13 @@ class GruPredictor(BasePredictor):
             DROPOUT,
         )
         self.criterion = nn.MSELoss()
-        self.optimizer = optim.Adam(self.model.parameters(), LEARNING_RATE)
+        self.optimizer = optim.AdamW(self.model.parameters(), LEARNING_RATE)
         self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(
             self.optimizer,
             mode='min',
             factor=0.8,
             patience=200,
-            min_lr=5e-3,
+            min_lr=8e-3,
             verbose=True,
         )
 
@@ -95,11 +95,11 @@ class GruPredictor(BasePredictor):
 
         train_data = tensor([
             batch_data[i:i + SEQ_LEN]
-            for i in range(0, batch_size, step)
+            for i in range(batch_size, 0, -step)
         ], dtype=float32)
         expected = tensor([
             batch_data[i + SEQ_LEN:i + SEQ_LEN + OUTPUT_SIZE]
-            for i in range(0, batch_size, step)
+            for i in range(batch_size, 0, -step)
         ], dtype=float32)
 
         output: Tensor = self.model.forward(train_data)
