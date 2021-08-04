@@ -91,13 +91,15 @@ class GruPredictor(BasePredictor):
         self.model.zero_grad()
 
         batch_size = len(batch_data) - SEQ_LEN - OUTPUT_SIZE
+        step = math.ceil(RNN_WINDOW_SIZE / SEQ_LEN)
+
         train_data = tensor([
             batch_data[i:i + SEQ_LEN]
-            for i in range(0, batch_size)
+            for i in range(0, batch_size, step)
         ], dtype=float32)
         expected = tensor([
             batch_data[i + SEQ_LEN:i + SEQ_LEN + OUTPUT_SIZE]
-            for i in range(0, batch_size)
+            for i in range(0, batch_size, step)
         ], dtype=float32)
 
         output: Tensor = self.model.forward(train_data)
@@ -127,7 +129,7 @@ class GruPredictor(BasePredictor):
             `target`: expected output
 
         Returns:
-            The loss (MSE) between output and target.
+            The loss (RMSE) between output and target.
         '''
 
         mse: Tensor = self.criterion(output, target)

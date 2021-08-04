@@ -174,7 +174,7 @@ class GruNet(nn.Module):
             seq_len,
             n_layers,
             dropout,
-            bidirectional=True,
+            bidirectional=False,
         )
 
         self.decoder = GruDecoder(
