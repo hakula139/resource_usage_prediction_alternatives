@@ -67,6 +67,7 @@ if __name__ == '__main__':
                     start_plotting = True
 
                 if start_plotting and train_loss >= 0:
+                    train_loss *= max_value
                     train_loss_x.append(i)
                     train_loss_y.append(train_loss)
 
@@ -90,6 +91,7 @@ if __name__ == '__main__':
                     prediction_y.append(prediction)
 
                 if start_plotting and valid_loss >= 0:
+                    valid_loss *= max_value
                     total_loss += valid_loss
                     loss_count += 1
                     avg_loss = total_loss / loss_count
@@ -108,22 +110,22 @@ if __name__ == '__main__':
                 print(
                     f'#{i + 1:<6} > {prediction}'
                     f' \tLoss:' + (
-                        f' {train_loss:.5f} (train)'
+                        f' {train_loss:8.5f} (train)'
                         if train_loss >= 0 else ' ' * 16
                     ) + (
-                        f' | {valid_loss:.5f} (valid)'
+                        f' | {valid_loss:8.5f} (valid)'
                         if valid_loss >= 0 else ' ' * 18
                     ) + (
-                        f' | {avg_loss:.5f} (valid avg)'
+                        f' | {avg_loss:8.5f} (valid avg)'
                         if avg_loss >= 0 else ' ' * 22
-                    ) + f' \tTime: {time:.4f} ms'
+                    ) + f' \tTime: {time:.5f} ms'
                 )
                 output_file.write(f'{prediction} ')
 
         avg_time = total_time / time_count
         print(
             f'Loss: {avg_loss:.6f} (valid avg)\n'
-            f'Time: {avg_time:.4f} ms (avg) | {max_time:.4f} ms (max)'
+            f'Time: {avg_time:.5f} ms (avg) | {max_time:.5f} ms (max)'
         )
 
         plot_predictions(
