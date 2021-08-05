@@ -131,11 +131,11 @@ class GruDecoder(nn.Module):
         '''
         Args:
             `input`: shape(batch_size)
-            `hidden`: shape(1, batch_size, hidden_size)
+            `hidden`: shape(batch_size, hidden_size)
 
         Returns:
             `output`: shape(batch_size, 1)
-            `hidden`: shape(1, batch_size, hidden_size)
+            `hidden`: shape(batch_size, hidden_size)
         '''
 
         hidden = self.gru(
