@@ -17,7 +17,8 @@ DROPOUT = 0.3
 LEARNING_RATE = 1e-2
 LOSS_THRESHOLD = 0.1
 
-DISPLAY_SIZE = 5000
+DISPLAY_SIZE = 400
+PLOT_STEP = 500
 DATA_DIR = 'data'
 INPUT_PATH = os.path.join(DATA_DIR, 'input.txt')
 OUTPUT_PATH = os.path.join(DATA_DIR, 'output.txt')

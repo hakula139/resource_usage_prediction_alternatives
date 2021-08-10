@@ -46,7 +46,8 @@ if __name__ == '__main__':
         train_loss_y, valid_loss_y = [], []
 
         total_time, max_time, time_count = 0.0, 0.0, 0
-        total_loss, loss_count, avg_loss = 0.0, 0, -1.0
+        total_train_loss, train_loss_count, avg_train_loss = 0.0, 0, -1.0
+        total_valid_loss, valid_loss_count, avg_valid_loss = 0.0, 0, -1.0
 
         start_plotting = False
 
@@ -60,16 +61,18 @@ if __name__ == '__main__':
                 train_loss: float = predictor.train(train_input)
 
                 # Waiting for an acceptable training loss
-                if train_loss < 0:
-                    # Not training
-                    pass
-                elif train_loss < LOSS_THRESHOLD:
+                if train_loss >= 0 and train_loss < LOSS_THRESHOLD:
                     start_plotting = True
 
                 if start_plotting and train_loss >= 0:
                     train_loss *= max_value
-                    train_loss_x.append(i)
-                    train_loss_y.append(train_loss)
+                    total_train_loss += train_loss
+                    train_loss_count += 1
+                    avg_train_loss = total_train_loss / train_loss_count
+
+                    if (i - options.window_size) % PLOT_STEP == 0:
+                        train_loss_x.append(i)
+                        train_loss_y.append(avg_train_loss)
 
                 valid_input = data[-options.seq_len:]
                 predictions = predictor.predict(valid_input)
@@ -92,11 +95,13 @@ if __name__ == '__main__':
 
                 if start_plotting and valid_loss >= 0:
                     valid_loss *= max_value
-                    total_loss += valid_loss
-                    loss_count += 1
-                    avg_loss = total_loss / loss_count
-                    valid_loss_x.append(i + 1 - OUTPUT_SIZE)
-                    valid_loss_y.append(avg_loss)
+                    total_valid_loss += valid_loss
+                    valid_loss_count += 1
+                    avg_valid_loss = total_valid_loss / valid_loss_count
+
+                    if (i - options.window_size) % PLOT_STEP == 0:
+                        valid_loss_x.append(i + 1 - OUTPUT_SIZE)
+                        valid_loss_y.append(avg_valid_loss)
 
                 if hasattr(predictor, 'scheduler') and train_loss >= 0:
                     predictor.scheduler.step(train_loss)
@@ -110,21 +115,18 @@ if __name__ == '__main__':
                 print(
                     f'#{i + 1:<6} > {prediction}'
                     f' \tLoss:' + (
-                        f' {train_loss:8.5f} (train)'
-                        if train_loss >= 0 else ' ' * 16
+                        f' {avg_train_loss:8.5f} (train avg)'
+                        if avg_train_loss >= 0 else ' ' * 20
                     ) + (
-                        f' | {valid_loss:8.5f} (valid)'
-                        if valid_loss >= 0 else ' ' * 18
-                    ) + (
-                        f' | {avg_loss:8.5f} (valid avg)'
-                        if avg_loss >= 0 else ' ' * 22
+                        f' | {avg_valid_loss:8.5f} (valid avg)'
+                        if avg_valid_loss >= 0 else ' ' * 22
                     ) + f' \tTime: {time:.5f} ms'
                 )
                 output_file.write(f'{prediction} ')
 
         avg_time = total_time / time_count
         print(
-            f'Loss: {avg_loss:.6f} (valid avg)\n'
+            f'Loss: {avg_valid_loss:.6f} (valid avg)\n'
             f'Time: {avg_time:.5f} ms (avg) | {max_time:.5f} ms (max)'
         )
 

@@ -97,7 +97,7 @@ def figure_size(data_size: int) -> Tuple[int, int]:
         The width and height of the figure.
     '''
 
-    return min(data_size / 20, 600), 9
+    return max(min(data_size / 20, 600), 20), 9
 
 
 def plot_predictions(
@@ -147,7 +147,7 @@ def plot_loss(
     plt.title('Loss figure')
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
-    plt.plot(x1, y1, 'r', label='Training loss')
+    plt.plot(x1, y1, 'r', label='Training loss (average)')
     plt.plot(x2, y2, 'b', label='Validation loss (average)')
     plt.legend()
     plt.tight_layout()
